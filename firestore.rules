@@ -1,0 +1,147 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isAdmin() {
+      return isVerifiedUser() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        request.auth.token.email == 'creatergame31@gmail.com'
+      );
+    }
+
+    function isValidTrainingRun(data) {
+      return data.keys().hasAll([
+        'ownerId', 'name', 'baseModel', 'rank', 'alpha', 'learningRate',
+        'epoch', 'loss', 'valLoss', 'status', 'hfDataset', 'githubRepo',
+        'cloudProvider', 'encryptedAtRest', 'createdAt', 'updatedAt'
+      ]) &&
+      data.keys().hasOnly([
+        'ownerId', 'name', 'baseModel', 'rank', 'alpha', 'learningRate',
+        'epoch', 'loss', 'valLoss', 'status', 'hfDataset', 'githubRepo',
+        'cloudProvider', 'encryptedAtRest', 'createdAt', 'updatedAt'
+      ]) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.name is string && data.name.size() >= 1 && data.name.size() <= 120 &&
+      data.baseModel is string && data.baseModel.size() >= 1 && data.baseModel.size() <= 120 &&
+      data.rank is number && data.rank >= 1 && data.rank <= 1024 &&
+      data.alpha is number && data.alpha >= 1 && data.alpha <= 2048 &&
+      data.learningRate is number && data.learningRate > 0 && data.learningRate <= 1 &&
+      data.epoch is number && data.epoch >= 0 && data.epoch <= 10000 &&
+      data.loss is number && data.loss >= 0 && data.loss <= 1000 &&
+      data.valLoss is number && data.valLoss >= 0 && data.valLoss <= 1000 &&
+      data.status is string && data.status.size() <= 20 &&
+      (data.status == 'running' || data.status == 'paused' || data.status == 'completed' || data.status == 'failed') &&
+      data.hfDataset is string && data.hfDataset.size() <= 200 &&
+      data.githubRepo is string && data.githubRepo.size() <= 200 &&
+      data.cloudProvider is string && data.cloudProvider.size() <= 80 &&
+      data.encryptedAtRest is bool &&
+      data.createdAt is timestamp &&
+      data.updatedAt is timestamp;
+    }
+
+    function isValidCheckpoint(data) {
+      return data.keys().hasAll(['ownerId', 'runId', 'step', 'loss', 'sha256', 'createdAt']) &&
+      data.keys().hasOnly(['ownerId', 'runId', 'step', 'loss', 'sha256', 'createdAt']) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      isValidId(data.runId) &&
+      data.step is number && data.step >= 0 &&
+      data.loss is number && data.loss >= 0 &&
+      data.sha256 is string && data.sha256.size() >= 1 && data.sha256.size() <= 128 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidAuditLog(data) {
+      return data.keys().hasAll(['ownerId', 'action', 'severity', 'details', 'createdAt']) &&
+      data.keys().hasOnly(['ownerId', 'action', 'severity', 'details', 'createdAt']) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.action is string && data.action.size() >= 1 && data.action.size() <= 160 &&
+      data.severity is string && data.severity.size() <= 20 &&
+      (data.severity == 'info' || data.severity == 'warning' || data.severity == 'critical') &&
+      data.details is string && data.details.size() <= 500 &&
+      data.createdAt is timestamp;
+    }
+
+    function isValidKeepNote(data) {
+      return data.keys().hasAll(['ownerId', 'title', 'body', 'createdAt']) &&
+      data.keys().hasOnly(['ownerId', 'title', 'body', 'createdAt']) &&
+      data.ownerId is string && data.ownerId.size() >= 1 && data.ownerId.size() <= 128 &&
+      data.ownerId == request.auth.uid &&
+      data.title is string && data.title.size() >= 1 && data.title.size() <= 140 &&
+      data.body is string && data.body.size() >= 1 && data.body.size() <= 2000 &&
+      data.createdAt is timestamp;
+    }
+
+    match /training_runs/{runId} {
+      allow get: if isSignedIn() && isValidId(runId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(runId) && isValidTrainingRun(incoming()) &&
+        incoming().createdAt == request.time && incoming().updatedAt == request.time;
+      allow update: if isVerifiedUser() && isValidId(runId) && isValidTrainingRun(incoming()) &&
+        incoming().ownerId == existing().ownerId &&
+        incoming().createdAt == existing().createdAt &&
+        incoming().updatedAt == request.time &&
+        (
+          isAdmin() ||
+          (
+            existing().status != 'completed' && existing().status != 'failed' &&
+            incoming().diff(existing()).affectedKeys().hasOnly(['epoch', 'loss', 'valLoss', 'status', 'rank', 'alpha', 'learningRate', 'updatedAt'])
+          )
+        );
+      allow delete: if isVerifiedUser() && isValidId(runId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /checkpoints/{checkpointId} {
+      allow get: if isSignedIn() && isValidId(checkpointId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(checkpointId) && isValidCheckpoint(incoming()) &&
+        incoming().createdAt == request.time &&
+        exists(/databases/$(database)/documents/training_runs/$(incoming().runId)) &&
+        get(/databases/$(database)/documents/training_runs/$(incoming().runId)).data.ownerId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(checkpointId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+
+    match /audit_logs/{logId} {
+      allow get: if isSignedIn() && isValidId(logId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(logId) && isValidAuditLog(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update, delete: if false;
+    }
+
+    match /keep_notes/{noteId} {
+      allow get: if isSignedIn() && isValidId(noteId) && (existing().ownerId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.ownerId == request.auth.uid || isAdmin());
+      allow create: if isVerifiedUser() && isValidId(noteId) && isValidKeepNote(incoming()) &&
+        incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isVerifiedUser() && isValidId(noteId) && (existing().ownerId == request.auth.uid || isAdmin());
+    }
+  }
+}

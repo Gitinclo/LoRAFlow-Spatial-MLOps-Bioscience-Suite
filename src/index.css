@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Google Sans', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: #090d16;
+  color: #f8fafc;
+  overscroll-behavior: none;
+}
+
+.font-mono-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Official Google Sign-In Material Button Styling */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: #131314;
+  background-image: none;
+  border: 1px solid #8e918f;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  color: #e3e3e3;
+  cursor: pointer;
+  font-family: 'Roboto', arial, sans-serif;
+  font-size: 13px;
+  height: 36px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 14px;
+  position: relative;
+  text-align: center;
+  transition: background-color 0.2s, border-color 0.2s;
+  vertical-align: middle;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+}
+
+.gsi-material-button:hover {
+  background-color: #1f2937;
+  border-color: #cbd5e1;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 18px;
+  margin-right: 8px;
+  min-width: 18px;
+  width: 18px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  width: 100%;
+}
+
+/* Keep XRButtonWrapper compact in the top-right corner so it doesn't block the 3D scene */
+#XRButtonWrapper {
+  position: fixed !important;
+  top: 12px !important;
+  right: 16px !important;
+  left: auto !important;
+  width: auto !important;
+  height: auto !important;
+  z-index: 50 !important;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  pointer-events: none;
+}
+
+#XRButtonWrapper h1 {
+  display: none !important;
+}
+
+.XRButton {
+  pointer-events: auto;
+  background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%) !important;
+  color: #090d16 !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  font-size: 0.82rem !important;
+  font-weight: 600 !important;
+  padding: 8px 18px !important;
+  min-width: auto !important;
+  gap: 8px !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+}
+
+.XRButton::after {
+  width: 16px !important;
+  height: 16px !important;
+}

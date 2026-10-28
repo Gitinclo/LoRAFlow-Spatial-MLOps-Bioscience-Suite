@@ -1,0 +1,196 @@
+{
+  "entities": {
+    "TrainingRun": {
+      "title": "TrainingRun",
+      "description": "A LoRA training run configuration, status, and real-time loss telemetry.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "baseModel": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "rank": {
+          "type": "number"
+        },
+        "alpha": {
+          "type": "number"
+        },
+        "learningRate": {
+          "type": "number"
+        },
+        "epoch": {
+          "type": "number"
+        },
+        "loss": {
+          "type": "number"
+        },
+        "valLoss": {
+          "type": "number"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["running", "paused", "completed", "failed"]
+        },
+        "hfDataset": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "githubRepo": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "cloudProvider": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "encryptedAtRest": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "ownerId",
+        "name",
+        "baseModel",
+        "rank",
+        "alpha",
+        "learningRate",
+        "epoch",
+        "loss",
+        "valLoss",
+        "status",
+        "hfDataset",
+        "githubRepo",
+        "cloudProvider",
+        "encryptedAtRest",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Checkpoint": {
+      "title": "Checkpoint",
+      "description": "Exported LoRA safetensors checkpoint metadata.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "runId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "step": {
+          "type": "number"
+        },
+        "loss": {
+          "type": "number"
+        },
+        "sha256": {
+          "type": "string",
+          "maxLength": 128
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "runId", "step", "loss", "sha256", "createdAt"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Compliance and security audit trail entry.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "action": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["info", "warning", "critical"]
+        },
+        "details": {
+          "type": "string",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "action", "severity", "details", "createdAt"]
+    },
+    "KeepNoteFallback": {
+      "title": "KeepNoteFallback",
+      "description": "Firestore-backed research note synchronized with Google Keep workflow.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 140
+        },
+        "body": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["ownerId", "title", "body", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/training_runs/{runId}": {
+      "schema": "TrainingRun",
+      "description": "Stores LoRA training runs owned by authenticated users."
+    },
+    "/checkpoints/{checkpointId}": {
+      "schema": "Checkpoint",
+      "description": "Stores exported LoRA checkpoints."
+    },
+    "/audit_logs/{logId}": {
+      "schema": "AuditLog",
+      "description": "Immutable security and compliance audit trail logs."
+    },
+    "/keep_notes/{noteId}": {
+      "schema": "KeepNoteFallback",
+      "description": "Stores collaborative experiment notes."
+    }
+  }
+}

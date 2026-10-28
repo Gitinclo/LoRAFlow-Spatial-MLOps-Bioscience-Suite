@@ -1,0 +1,6 @@
+{
+  "name": "LoRAFlow Spatial MLOps & Bioscience Suite",
+  "description": "Enterprise LoRA (Low-Rank Adaptation) training dashboard, 3D spatial tensor rank visualizer, WebXR control room, bioscience structural target workbench, and full-stack Gemini AI & Google Workspace MLOps hub.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
